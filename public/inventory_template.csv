@@ -1,0 +1,4 @@
+property_type,listing_type,sector,size_sqyd,floor,facing,park_facing,price,status,owner_name,owner_phone,source,exclusive,notes
+plot,sale,21,200,,east,yes,1.10 cr,available,Ramesh Gupta,9811012345,direct,no,corner plot
+bf,sale,Sec 15,250,FF,north_east,no,@90,available,,9876543210,broker,no,lift + stilt parking
+kothi,rent,Sector 9,300,Full,south,yes,85000,available,Suresh,+91 99100 11223,direct,yes,

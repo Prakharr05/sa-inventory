@@ -1,0 +1,26 @@
+{
+  "name": "sa-inventory",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "next": "^15",
+    "papaparse": "^5",
+    "react": "^19",
+    "react-dom": "^19",
+    "read-excel-file": "^5"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/papaparse": "^5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}

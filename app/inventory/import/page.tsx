@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import readXlsxFile from "read-excel-file";
 import { supabase } from "@/lib/supabase";
-import AuthGate from "@/components/AuthGate";
+import AuthGate, { useIsAdmin } from "@/components/AuthGate";
 import { formatINR } from "@/lib/normalize";
 import {
   COLUMNS, ColKey, RawRow, DupKey, emptyRow, isBlank, validateRow, isLikelyDup, mapHeader,
@@ -14,7 +14,11 @@ const START_ROWS = 15;
 type Batch = { id: string; file_name: string | null; row_count: number; created_at: string };
 
 export default function ImportPage() {
-  return <AuthGate><Importer /></AuthGate>;
+  return <AuthGate><AdminOnly /></AuthGate>;
+}
+
+function AdminOnly() {
+  return useIsAdmin() ? <Importer /> : <main><p className="muted">Bulk import is for admins only.</p></main>;
 }
 
 function Importer() {
@@ -141,7 +145,7 @@ function Importer() {
     const payload = results.flatMap((r) => (r?.clean ? [r.clean] : []));
     if (!payload.length || (!validOnly && invalid)) return;
     setBusy(true); setMsg("");
-    const { error } = await supabase.rpc("import_properties", {
+    const { error } = await supabase.rpc("import_properties_admin", {
       p_rows: payload, p_file_name: fileName ?? "manual entry",
     });
     setBusy(false);
@@ -155,7 +159,7 @@ function Importer() {
 
   const undo = async (b: Batch) => {
     if (!confirm(`Delete the ${b.row_count} properties from this import?`)) return;
-    const { data, error } = await supabase.rpc("undo_import", { p_batch: b.id });
+    const { data, error } = await supabase.rpc("undo_import_admin", { p_batch: b.id });
     setMsg(error ? `Undo failed: ${error.message}` : `Removed ${data} properties.`);
     loadBatches();
   };

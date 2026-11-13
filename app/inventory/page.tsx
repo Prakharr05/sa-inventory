@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import AuthGate from "@/components/AuthGate";
+import AuthGate, { useIsAdmin } from "@/components/AuthGate";
 import { formatINR, parsePrice } from "@/lib/normalize";
 
 const TYPES = ["plot", "builder_floor", "kothi", "flat", "shop", "office", "land", "other"];
@@ -34,6 +34,7 @@ export default function InventoryPage() {
 }
 
 function Inventory() {
+  const isAdmin = useIsAdmin();
   const [f, setF] = useState<Filters>(EMPTY);
   const [rows, setRows] = useState<Row[]>([]);
   const [count, setCount] = useState(0);
@@ -162,7 +163,8 @@ function Inventory() {
                   </td>
                   <td className="c" title={r.notes ?? ""}>{(r.notes ?? "").slice(0, 40)}</td>
                   <td className="c">
-                    <input type="checkbox" checked={r.is_public} title="Show on website"
+                    <input type="checkbox" checked={r.is_public} disabled={!isAdmin}
+                      title={isAdmin ? "Show on website" : "Only admins can publish"}
                       onChange={(e) => update(r.id, { is_public: e.target.checked })} />
                   </td>
                   <td className="c">

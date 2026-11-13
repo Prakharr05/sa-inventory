@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as N from "@/lib/normalize";
-import { isLikelyDup, DupKey } from "@/lib/validate";
+import { useIsAdmin } from "@/components/AuthGate";
 import { uploadPhoto, deletePhotos, photoUrl, uuid } from "@/lib/photos";
 
 const TYPES = [
@@ -25,6 +25,7 @@ const BLANK: Form = {
 };
 
 export default function PropertyForm({ id }: { id: string | null }) {
+  const isAdmin = useIsAdmin();
   const [f, setF] = useState<Form>(BLANK);
   const [photos, setPhotos] = useState<string[]>([]);       // saved paths
   const [removed, setRemoved] = useState<string[]>([]);     // saved paths to delete on save
@@ -76,12 +77,11 @@ export default function PropertyForm({ id }: { id: string | null }) {
 
     // Duplicate check (new properties only)
     if (!id && !force) {
-      const { data } = await supabase.from("properties")
-        .select("sector,property_type,listing_type,size_sqyd,price_inr")
-        .eq("sector", sector.value!).neq("status", "sold");
-      const me: DupKey = { sector: sector.value!, property_type: type.value!, listing_type: f.listing_type,
-        size_sqyd: size.value!, price_inr: price.value! };
-      if ((data ?? []).some((d) => isLikelyDup(d as DupKey, me))) {
+      // Server-side check: staff learn only "similar exists", not the other listing.
+      const { data: dup } = await supabase.rpc("similar_property_exists", {
+        p_sector: sector.value, p_type: type.value, p_listing: f.listing_type,
+        p_size: size.value, p_price: price.value });
+      if (dup) {
         setBusy(false);
         setDupWarn("A similar property (same sector, type, size, price within 5%) already exists.");
         return;
@@ -94,7 +94,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
       for (const file of newFiles) uploaded.push(await uploadPhoto(pid, file));
       const keep = photos.filter((p) => !removed.includes(p));
 
-      const { error } = await supabase.rpc("save_property", { p: {
+      const { error } = await supabase.rpc("save_property_guarded", { p: {
         id: pid, property_type: type.value, listing_type: f.listing_type, sector: sector.value,
         size_sqyd: size.value, floor: f.floor, facing: f.facing, park_facing: f.park_facing,
         price_inr: price.value, status: f.status, source: f.source, exclusive: f.exclusive,
@@ -190,7 +190,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
       <div className="pf-toggles">
         <label><input type="checkbox" checked={f.park_facing} onChange={(e) => set("park_facing", e.target.checked)} /> Park facing</label>
         <label><input type="checkbox" checked={f.exclusive} onChange={(e) => set("exclusive", e.target.checked)} /> Exclusive</label>
-        <label><input type="checkbox" checked={f.is_public} onChange={(e) => set("is_public", e.target.checked)} /> Show on website</label>
+        {isAdmin && <label><input type="checkbox" checked={f.is_public} onChange={(e) => set("is_public", e.target.checked)} /> Show on website</label>}
       </div>
 
       <label className="pf-label">Photos</label>
@@ -241,7 +241,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
           ⚠ {dupWarn}
           <div className="pf-actions">
             <button onClick={() => save(true)} disabled={busy}>Save anyway</button>
-            <a className="btn" href={`/inventory?sector=${encodeURIComponent(sector.value ?? "")}`}>View sector</a>
+            {isAdmin && <a className="btn" href={`/inventory?sector=${encodeURIComponent(sector.value ?? "")}`}>View sector</a>}
           </div>
         </div>
       )}

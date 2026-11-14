@@ -5,7 +5,7 @@ export const COLUMNS = [
   { key: "property_type", label: "Type", required: true, hint: "plot / bf / kothi / flat / shop" },
   { key: "listing_type", label: "Sale/Rent", hint: "sale" },
   { key: "sector", label: "Sector", required: true, hint: "21 / Sec 21" },
-  { key: "size_sqyd", label: "Size (sq yd)", required: true, hint: "200" },
+  { key: "size_sqyd", label: "Size", required: true, hint: "sq yd; flats: sq ft" },
   { key: "floor", label: "Floor", hint: "GF / FF / Full" },
   { key: "facing", label: "Facing", hint: "E / NE" },
   { key: "park_facing", label: "Park", hint: "yes/no" },
@@ -48,7 +48,7 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
   const property_type = take("property_type", N.parseType(r.property_type));
   const listing_type = take("listing_type", N.parseListing(r.listing_type));
   const sector = take("sector", N.parseSector(r.sector, sectors));
-  const size_sqyd = take("size_sqyd", N.parseSize(r.size_sqyd));
+  const size_sqyd = take("size_sqyd", N.parseSize(r.size_sqyd, N.sizeUnit(property_type)));
   const facing = take("facing", N.parseFacing(r.facing));
   const park_facing = take("park_facing", N.parseBool(r.park_facing));
   const price_inr = take("price", N.parsePrice(r.price, size_sqyd, listing_type));

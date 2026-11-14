@@ -1,4 +1,4 @@
-import { formatINR } from "./normalize";
+import { formatINR, formatSize } from "./normalize";
 import { photoUrl } from "./photos";
 
 export type ShareProperty = {
@@ -12,7 +12,7 @@ const label = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUp
 export function propertyMessage(p: ShareProperty): string {
   const lines = [
     `*${label(p.property_type)} for ${p.listing_type} — ${p.sector}, Faridabad*`,
-    `Size: ${Number(p.size_sqyd)} sq yd`,
+    `Size: ${formatSize(p.size_sqyd, p.property_type)}`,
     p.floor && `Floor: ${p.floor}`,
     (p.facing || p.park_facing) && `Facing: ${[p.facing && label(p.facing), p.park_facing && "Park facing"].filter(Boolean).join(" · ")}`,
     `${p.listing_type === "rent" ? "Rent" : "Price"}: ${formatINR(p.price_inr)}${p.listing_type === "rent" ? "/month" : ""}`,

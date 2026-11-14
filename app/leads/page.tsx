@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AuthGate from "@/components/AuthGate";
-import { formatINR } from "@/lib/normalize";
+import { formatINR, fromSqyd, leadSizeUnit, unitLabel } from "@/lib/normalize";
 import { isoDate } from "@/components/LeadForm";
 
 type Lead = {
@@ -89,7 +89,8 @@ function Leads() {
                 {l.wants === "rent" ? "Rent" : "Buy"}
                 {l.property_types.length ? ` · ${l.property_types.map((t) => t.replace(/_/g, " ")).join(", ")}` : ""}
                 {l.sectors.length ? ` · ${l.sectors.join(", ")}` : ""}
-                {range(l.size_min, l.size_max, (x) => `${Number(x)}`) && ` · ${range(l.size_min, l.size_max, (x) => `${Number(x)}`)} yd`}
+                {(() => { const u = leadSizeUnit(l.property_types); const r = range(l.size_min, l.size_max, (x) => `${fromSqyd(x, u)}`);
+                  return r && ` · ${r} ${unitLabel(u)}`; })()}
                 {range(l.budget_min, l.budget_max, formatINR) && ` · ${range(l.budget_min, l.budget_max, formatINR)}`}
               </div>
               <div className="lead-actions">

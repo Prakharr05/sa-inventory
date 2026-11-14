@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AuthGate, { useIsAdmin } from "@/components/AuthGate";
-import { formatINR, parsePrice } from "@/lib/normalize";
+import { formatINR, parsePrice, parseSize, sizeUnit, unitLabel, formatSize } from "@/lib/normalize";
 
 const TYPES = ["plot", "builder_floor", "kothi", "flat", "shop", "office", "land", "other"];
 const STATUSES = ["available", "token", "sold", "withdrawn"];
@@ -13,16 +13,16 @@ const PAGE = 200;
 type Row = {
   id: string; property_type: string; listing_type: string; sector: string; size_sqyd: number;
   floor: string | null; facing: string | null; park_facing: boolean; price_inr: number;
-  status: string; source: string; exclusive: boolean; notes: string | null; is_public: boolean;
+  status: string; source: string; exclusive: boolean; notes: string | null; is_public: boolean; entry_method: string;
   last_verified_at: string; owner: { name: string | null; phone: string | null } | null;
 };
 
 type Filters = {
   q: string; sector: string; type: string; listing: string; status: string;
-  minPrice: string; maxPrice: string; minSize: string; maxSize: string; staleOnly: boolean;
+  minPrice: string; maxPrice: string; minSize: string; maxSize: string; staleOnly: boolean; entry: string;
 };
 const EMPTY: Filters = { q: "", sector: "", type: "", listing: "", status: "available",
-  minPrice: "", maxPrice: "", minSize: "", maxSize: "", staleOnly: false };
+  minPrice: "", maxPrice: "", minSize: "", maxSize: "", staleOnly: false, entry: "" };
 
 const label = (s: string) => s.replace(/_/g, " ");
 const daysAgo = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
@@ -62,8 +62,13 @@ function Inventory() {
     const minP = budget(filters.minPrice), maxP = budget(filters.maxPrice);
     if (minP) q = q.gte("price_inr", minP);
     if (maxP) q = q.lte("price_inr", maxP);
-    if (filters.minSize) q = q.gte("size_sqyd", Number(filters.minSize));
-    if (filters.maxSize) q = q.lte("size_sqyd", Number(filters.maxSize));
+    // Size filter is in sq ft when the type filter is a sq-ft type (flat), else sq yd.
+    const su = sizeUnit(filters.type);
+    const minS = filters.minSize ? parseSize(filters.minSize, su).value : null;
+    const maxS = filters.maxSize ? parseSize(filters.maxSize, su).value : null;
+    if (minS) q = q.gte("size_sqyd", minS);
+    if (maxS) q = q.lte("size_sqyd", maxS);
+    if (filters.entry) q = q.eq("entry_method", filters.entry);
     if (filters.staleOnly) q = q.lt("last_verified_at", new Date(Date.now() - STALE_DAYS * 864e5).toISOString());
     if (filters.q.trim()) q = q.ilike("notes", `%${filters.q.trim()}%`);
     const { data, count, error } = await q;
@@ -113,8 +118,13 @@ function Inventory() {
         </select>
         <input placeholder="Min price (90 L)" value={f.minPrice} onChange={(e) => set("minPrice", e.target.value)} />
         <input placeholder="Max price (1.5 cr)" value={f.maxPrice} onChange={(e) => set("maxPrice", e.target.value)} />
-        <input placeholder="Min sq yd" inputMode="numeric" value={f.minSize} onChange={(e) => set("minSize", e.target.value)} />
-        <input placeholder="Max sq yd" inputMode="numeric" value={f.maxSize} onChange={(e) => set("maxSize", e.target.value)} />
+        <input placeholder={`Min ${unitLabel(sizeUnit(f.type))}`} inputMode="numeric" value={f.minSize} onChange={(e) => set("minSize", e.target.value)} />
+        <input placeholder={`Max ${unitLabel(sizeUnit(f.type))}`} inputMode="numeric" value={f.maxSize} onChange={(e) => set("maxSize", e.target.value)} />
+        <select value={f.entry} onChange={(e) => set("entry", e.target.value)}>
+          <option value="">Manual + bulk</option>
+          <option value="manual">Manual only</option>
+          <option value="bulk">Bulk only</option>
+        </select>
         <input placeholder="Search notes" value={f.q} onChange={(e) => set("q", e.target.value)} />
         <label><input type="checkbox" checked={f.staleOnly} onChange={(e) => set("staleOnly", e.target.checked)} /> Needs re-check</label>
         <button onClick={() => setF(EMPTY)}>Reset</button>
@@ -139,8 +149,9 @@ function Inventory() {
                   <td className="c">
                     {label(r.property_type)}{r.listing_type === "rent" && <span className="pill"> rent</span>}
                     {r.exclusive && <span className="pill"> excl.</span>}
+                    {r.entry_method === "bulk" && <span className="pill" title="Added via bulk import"> bulk</span>}
                   </td>
-                  <td className="c">{Number(r.size_sqyd)} yd</td>
+                  <td className="c">{formatSize(r.size_sqyd, r.property_type)}</td>
                   <td className="c">
                     {[r.floor, r.facing && label(r.facing), r.park_facing && "park"].filter(Boolean).join(" · ") || "—"}
                   </td>

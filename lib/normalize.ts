@@ -40,15 +40,32 @@ export function parseSector(input: unknown, known: string[]): Parsed<string> {
   return hit ? ok(hit) : err(`Unknown sector "${s}"`);
 }
 
-// ---------- Size (sq yd / gaj) ----------
-export function parseSize(input: unknown): Parsed<number> {
+// ---------- Size ----------
+// Stored in sq yd for every type (so matching works across types).
+// Flats are entered/shown in sq ft. Add "shop"/"office" here to switch them too.
+export type SizeUnit = "sqyd" | "sqft";
+export const SQFT_TYPES = ["flat"];
+export const sizeUnit = (type: string | null | undefined): SizeUnit =>
+  type && SQFT_TYPES.includes(type) ? "sqft" : "sqyd";
+// A lead uses sq ft only if every type it wants is a sq-ft type.
+export const leadSizeUnit = (types: string[]): SizeUnit =>
+  types.length && types.every((t) => SQFT_TYPES.includes(t)) ? "sqft" : "sqyd";
+export const unitLabel = (u: SizeUnit) => (u === "sqft" ? "sq ft" : "sq yd");
+const round2 = (n: number) => Math.round(n * 100) / 100;
+export const fromSqyd = (sqyd: number, u: SizeUnit) => (u === "sqft" ? Math.round(Number(sqyd) * 9) : round2(Number(sqyd)));
+export const formatSize = (sqyd: number, type: string) => `${fromSqyd(sqyd, sizeUnit(type))} ${unitLabel(sizeUnit(type))}`;
+
+// Returns sq yd. "200", "200 gaj", "1200 sqft" — an explicit unit overrides the default.
+export function parseSize(input: unknown, defaultUnit: SizeUnit = "sqyd"): Parsed<number> {
   const s = clean(input).toLowerCase().replace(/,/g, "");
   if (!s) return err("Required");
-  const m = s.match(/^(\d+(?:\.\d+)?)\s*(sq\.?\s*yd|sqyd|yd|y|gaj|g)?$/);
-  if (!m) return err(`Can't read size "${input}" (use sq yd)`);
+  const m = s.match(/^(\d+(?:\.\d+)?)\s*(sq\.?\s*yds?|sqyd|yds?|y|gaj|g|sq\.?\s*ft|sqft|sft|ft)?$/);
+  if (!m) return err(`Can't read size "${input}" (use ${unitLabel(defaultUnit)})`);
   const n = parseFloat(m[1]);
-  if (n <= 0 || n > 100000) return err("Size out of range");
-  return ok(n);
+  const unit: SizeUnit = m[2] ? (/f/.test(m[2]) ? "sqft" : "sqyd") : defaultUnit;
+  const sqyd = round2(unit === "sqft" ? n / 9 : n);
+  if (sqyd <= 0 || sqyd > 100000) return err("Size out of range");
+  return ok(sqyd);
 }
 
 // ---------- Price → rupees ----------

@@ -26,7 +26,7 @@ type Match = ShareProperty & { id: string; status: string };
 
 const toggle = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 const money = (s: string) => (s.trim() ? N.parsePrice(s, null, "rent") : { value: null });
-const num = (s: string) => (s.trim() ? N.parseSize(s) : { value: null });
+const num = (s: string, u: N.SizeUnit) => (s.trim() ? N.parseSize(s, u) : { value: null });
 const shortINR = (n: number | null) => (n == null ? "" : N.formatINR(n).replace("₹", ""));
 export const isoDate = (d: Date) => d.toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
 
@@ -57,8 +57,9 @@ export default function LeadForm({ id: initialId }: { id: string | null }) {
       if (error || !data) { setMsg(error?.message ?? "Not found"); return; }
       setF({
         name: data.name, phone: data.phone ?? "", wants: data.wants, property_types: data.property_types ?? [],
-        sectors: data.sectors ?? [], size_min: data.size_min ? String(Number(data.size_min)) : "",
-        size_max: data.size_max ? String(Number(data.size_max)) : "", budget_min: shortINR(data.budget_min),
+        sectors: data.sectors ?? [],
+        size_min: data.size_min ? String(N.fromSqyd(data.size_min, N.leadSizeUnit(data.property_types ?? []))) : "",
+        size_max: data.size_max ? String(N.fromSqyd(data.size_max, N.leadSizeUnit(data.property_types ?? []))) : "", budget_min: shortINR(data.budget_min),
         budget_max: shortINR(data.budget_max), status: data.status, follow_up_on: data.follow_up_on ?? "",
         source: data.source ?? "referral", referred_by: data.referred_by ?? "", notes: data.notes ?? "",
       });
@@ -75,7 +76,8 @@ export default function LeadForm({ id: initialId }: { id: string | null }) {
 
   const phone = f.phone.trim() ? N.parsePhone(f.phone) : { value: null };
   const bMin = money(f.budget_min), bMax = money(f.budget_max);
-  const sMin = num(f.size_min), sMax = num(f.size_max);
+  const unit = N.leadSizeUnit(f.property_types);
+  const sMin = num(f.size_min, unit), sMax = num(f.size_max, unit);
   const errors = [
     !f.name.trim() && "Name is required",
     "error" in phone && phone.error && `Phone: ${phone.error}`,
@@ -147,7 +149,7 @@ export default function LeadForm({ id: initialId }: { id: string | null }) {
 
       <div className="pf-row">
         <div>
-          <label className="pf-label">Size (sq yd)</label>
+          <label className="pf-label">Size ({N.unitLabel(unit)})</label>
           <div className="pf-inline">
             <input inputMode="decimal" placeholder="min" value={f.size_min} onChange={(e) => set("size_min", e.target.value)} />
             <input inputMode="decimal" placeholder="max" value={f.size_max} onChange={(e) => set("size_max", e.target.value)} />
@@ -204,7 +206,7 @@ export default function LeadForm({ id: initialId }: { id: string | null }) {
           {matches.map((p) => (
             <div key={p.id} className="match">
               <a href={`/inventory/property?id=${p.id}`}>
-                <strong>{p.property_type.replace(/_/g, " ")} · {p.sector} · {Number(p.size_sqyd)} yd</strong>
+                <strong>{p.property_type.replace(/_/g, " ")} · {p.sector} · {N.formatSize(p.size_sqyd, p.property_type)}</strong>
               </a>
               <div>{N.formatINR(p.price_inr)}{[p.floor, p.facing?.replace(/_/g, " "), p.park_facing && "park"].filter(Boolean).map((x) => ` · ${x}`)}</div>
               <a className="btn wa" target="_blank" rel="noreferrer" href={whatsappLink(phone.value, propertyMessage(p))}>

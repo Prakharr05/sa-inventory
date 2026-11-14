@@ -51,3 +51,25 @@ describe("row + dup + headers", () => {
     expect(mapHeader("Demand")).toBe("price");
   });
 });
+
+describe("units", () => {
+  it("flat size in sq ft → sq yd", () => expect(N.parseSize("1200", "sqft").value).toBe(133.33));
+  it("explicit unit overrides default", () => {
+    expect(N.parseSize("1350 sqft").value).toBe(150);
+    expect(N.parseSize("200 gaj", "sqft").value).toBe(200);
+  });
+  it("round-trips for display", () => expect(N.fromSqyd(N.parseSize("1200", "sqft").value!, "sqft")).toBe(1200));
+  it("formatSize by type", () => {
+    expect(N.formatSize(133.33, "flat")).toBe("1200 sq ft");
+    expect(N.formatSize(200, "plot")).toBe("200 sq yd");
+  });
+  it("bulk row: flat size read as sq ft", () => {
+    const r = validateRow({ ...emptyRow(), property_type: "flat", sector: "21", size_sqyd: "1350", price: "90 L", owner_phone: "9811012345" }, SECTORS);
+    expect(r.clean?.size_sqyd).toBe(150);
+  });
+  it("lead unit", () => {
+    expect(N.leadSizeUnit(["flat"])).toBe("sqft");
+    expect(N.leadSizeUnit(["flat", "plot"])).toBe("sqyd");
+    expect(N.leadSizeUnit([])).toBe("sqyd");
+  });
+});

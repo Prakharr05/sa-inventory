@@ -50,7 +50,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
         if (error || !data) { setMsg(error?.message ?? "Not found"); return; }
         setF({
           property_type: data.property_type, listing_type: data.listing_type, sector: data.sector,
-          size: String(Number(data.size_sqyd)), floor: data.floor ?? "", facing: data.facing ?? "",
+          size: String(N.fromSqyd(data.size_sqyd, N.sizeUnit(data.property_type))), floor: data.floor ?? "", facing: data.facing ?? "",
           park_facing: data.park_facing, price: N.formatINR(data.price_inr).replace("₹", ""),
           status: data.status, owner_name: data.owner?.name ?? "", owner_phone: data.owner?.phone ?? "",
           source: data.source ?? "direct_owner", exclusive: data.exclusive, notes: data.notes ?? "",
@@ -63,7 +63,8 @@ export default function PropertyForm({ id }: { id: string | null }) {
   // Live parse for preview + validation
   const type = N.parseType(f.property_type);
   const sector = N.parseSector(f.sector, sectors);
-  const size = N.parseSize(f.size);
+  const unit = N.sizeUnit(type.value);
+  const size = N.parseSize(f.size, unit);
   const price = N.parsePrice(f.price.replace(/\bCr\b/, "cr"), size.value, f.listing_type);
   const phone = f.owner_phone.trim() ? N.parsePhone(f.owner_phone) : { value: null };
   const errors = [
@@ -127,7 +128,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
     return (
       <main className="pf">
         <h1>Saved ✓</h1>
-        <p>{TYPES.find((t) => t[0] === type.value)?.[1]} · {sector.value} · {size.value} yd · {N.formatINR(price.value!)}</p>
+        <p>{TYPES.find((t) => t[0] === type.value)?.[1]} · {sector.value} · {N.formatSize(size.value!, type.value!)} · {N.formatINR(price.value!)}</p>
         <div className="pf-actions">
           <button className="primary" onClick={addAnother}>Add another</button>
           <a className="btn" href={`/inventory/property?id=${savedId}`}>Edit this one</a>
@@ -164,8 +165,8 @@ export default function PropertyForm({ id }: { id: string | null }) {
 
       <div className="pf-row">
         <div>
-          <label className="pf-label">Size (sq yd) *</label>
-          <input inputMode="decimal" placeholder="200" value={f.size} onChange={(e) => set("size", e.target.value)} />
+          <label className="pf-label">Size ({N.unitLabel(unit)}) *</label>
+          <input inputMode="decimal" placeholder={unit === "sqft" ? "1200" : "200"} value={f.size} onChange={(e) => set("size", e.target.value)} />
         </div>
         <div>
           <label className="pf-label">{f.listing_type === "rent" ? "Rent / month *" : "Price *"}</label>

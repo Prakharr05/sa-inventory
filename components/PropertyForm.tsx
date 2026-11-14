@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import * as N from "@/lib/normalize";
 import { useIsAdmin } from "@/components/AuthGate";
+import PropertyLeads from "@/components/PropertyLeads";
 import { uploadPhoto, deletePhotos, photoUrl, uuid } from "@/lib/photos";
 
 const TYPES = [
@@ -253,6 +254,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
         </button>
         {savedId && id && <span className="ok">Saved ✓</span>}
       </div>
+      {id && <PropertyLeads id={id} />}
     </main>
   );
 }

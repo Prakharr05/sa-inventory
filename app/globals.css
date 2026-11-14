@@ -59,3 +59,18 @@ tr.stale td { background: #fff8e6; }
 .pf-save { position: sticky; bottom: 0; background: #f7f7f5; padding: 12px 0; display: flex; gap: 10px; align-items: center; }
 .pf-save .primary { flex: 1; padding: 12px; font-size: 16px; }
 @media (max-width: 600px) { .nav { gap: 10px; padding: 10px 12px; overflow-x: auto; } .nav .muted { display: none; } main { padding: 12px; } }
+
+/* leads */
+.pf-inline { display: flex; gap: 6px; align-items: center; }
+.pf-inline input { margin-bottom: 0 !important; }
+.search { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font: inherit; min-width: 200px; }
+.lead-list { display: grid; gap: 8px; max-width: 760px; }
+.lead-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.lead-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lead-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lead-actions select { padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+.pill.ok-pill { background: #d9f2e1; color: #1f7a3d; text-decoration: none; }
+.matches { margin-top: 20px; }
+.matches h2 { font-size: 16px; }
+.match { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: grid; gap: 4px; }
+.btn.wa { background: #25d366; border-color: #25d366; color: #fff; justify-self: start; margin-top: 4px; }

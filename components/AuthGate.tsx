@@ -30,6 +30,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     <AdminCtx.Provider value={isAdmin}>
       <nav className="nav">
         <a href="/inventory">Inventory</a>
+        <a href="/leads">Leads</a>
         <a href="/inventory/property">+ Add</a>
         {isAdmin && <a href="/inventory/import">Bulk add</a>}
         <span className="spacer" />

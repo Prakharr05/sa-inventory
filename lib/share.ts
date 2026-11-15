@@ -1,4 +1,4 @@
-import { formatINR, formatSize } from "./normalize";
+import { formatINR, formatSize, nocApplies } from "./normalize";
 import { photoUrl } from "./photos";
 
 export type ShareProperty = {
@@ -17,7 +17,7 @@ export function propertyMessage(p: ShareProperty): string {
     p.floor && `Floor: ${p.floor}`,
     (p.facing || p.park_facing) && `Facing: ${[p.facing && label(p.facing), p.park_facing && "Park facing"].filter(Boolean).join(" · ")}`,
     `${p.listing_type === "rent" ? "Rent" : "Price"}: ${formatINR(p.price_inr)}${p.listing_type === "rent" ? "/month" : ""}`,
-    p.listing_type === "sale" && p.noc === "yes" ? "NOC: Available" : null,
+    nocApplies(p.property_type, p.listing_type) && p.noc === "yes" ? "NOC: Available" : null,
     p.photos?.length ? `Photos: ${photoUrl(p.photos[0])}` : null,
     "",
     "— Sharma Associates",

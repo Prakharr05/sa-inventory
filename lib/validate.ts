@@ -57,8 +57,8 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
   const owner_phone = take("owner_phone", N.parsePhone(r.owner_phone));
   const source = take("source", N.parseSource(r.source));
   const exclusive = take("exclusive", N.parseBool(r.exclusive));
-  // NOC only applies to sale listings; ignored for rent.
-  const noc = listing_type === "sale" ? take("noc", N.parseNoc(r.noc)) : null;
+  // NOC only applies to plots for sale; ignored otherwise.
+  const noc = N.nocApplies(property_type, listing_type) ? take("noc", N.parseNoc(r.noc)) : null;
 
   const warnings: string[] = [];
   if (price_inr && listing_type === "sale" && price_inr < 5e5) warnings.push("Sale price under ₹5 L — check");

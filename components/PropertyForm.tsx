@@ -99,7 +99,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
       const { error } = await supabase.rpc("save_property_guarded", { p: {
         id: pid, property_type: type.value, listing_type: f.listing_type, sector: sector.value,
         size_sqyd: size.value, floor: f.floor, facing: f.facing, park_facing: f.park_facing,
-        price_inr: price.value, status: f.status, source: f.source, exclusive: f.exclusive, noc: f.listing_type === "sale" ? f.noc : "",
+        price_inr: price.value, status: f.status, source: f.source, exclusive: f.exclusive, noc: N.nocApplies(type.value, f.listing_type) ? f.noc : "",
         owner_name: f.owner_name.trim(), owner_phone: phone.value ?? "", notes: f.notes.trim(),
         photos: [...keep, ...uploaded], is_public: f.is_public,
       } });
@@ -218,7 +218,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
         </label>
       </div>
 
-      {f.listing_type === "sale" && <>
+      {N.nocApplies(type.value, f.listing_type) && <>
       <label className="pf-label">NOC</label>
       <div className="chips">
         {([["yes", "Yes"], ["applied", "Applied"], ["no", "No"], ["", "Not sure"]] as const).map(([v, l]) => (

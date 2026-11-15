@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AuthGate, { useIsAdmin } from "@/components/AuthGate";
-import { formatINR, parsePrice, parseSize, sizeUnit, unitLabel, formatSize } from "@/lib/normalize";
+import { formatINR, parsePrice, parseSize, sizeUnit, unitLabel, formatSize, nocApplies, NOC_TYPES } from "@/lib/normalize";
 
 const TYPES = ["plot", "builder_floor", "kothi", "flat", "shop", "office", "land", "other"];
 const STATUSES = ["available", "token", "sold", "withdrawn"];
@@ -69,8 +69,8 @@ function Inventory() {
     if (minS) q = q.gte("size_sqyd", minS);
     if (maxS) q = q.lte("size_sqyd", maxS);
     if (filters.entry) q = q.eq("entry_method", filters.entry);
-    // NOC is sale-only, so a NOC filter limits results to sale listings.
-    if (filters.noc) q = q.eq("listing_type", "sale");
+    // NOC only applies to plots for sale, so a NOC filter limits results to those.
+    if (filters.noc) q = q.eq("listing_type", "sale").in("property_type", NOC_TYPES);
     if (filters.noc === "unknown") q = q.is("noc", null);
     else if (filters.noc) q = q.eq("noc", filters.noc);
     if (filters.staleOnly) q = q.lt("last_verified_at", new Date(Date.now() - STALE_DAYS * 864e5).toISOString());
@@ -160,9 +160,9 @@ function Inventory() {
                   <td className="c">
                     {label(r.property_type)}{r.listing_type === "rent" && <span className="pill"> rent</span>}
                     {r.exclusive && <span className="pill"> excl.</span>}
-                    {r.listing_type === "sale" && r.noc === "yes" && <span className="pill ok-pill"> NOC</span>}
-                    {r.listing_type === "sale" && r.noc === "applied" && <span className="pill warn"> NOC applied</span>}
-                    {r.listing_type === "sale" && r.noc === "no" && <span className="pill"> no NOC</span>}
+                    {nocApplies(r.property_type, r.listing_type) && r.noc === "yes" && <span className="pill ok-pill"> NOC</span>}
+                    {nocApplies(r.property_type, r.listing_type) && r.noc === "applied" && <span className="pill warn"> NOC applied</span>}
+                    {nocApplies(r.property_type, r.listing_type) && r.noc === "no" && <span className="pill"> no NOC</span>}
                     {r.entry_method === "bulk" && <span className="pill" title="Added via bulk import"> bulk</span>}
                   </td>
                   <td className="c">{formatSize(r.size_sqyd, r.property_type)}</td>

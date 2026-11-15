@@ -90,3 +90,21 @@ describe("noc on rent", () => {
     expect(r.clean?.noc).toBeNull();
   });
 });
+
+describe("noc only for plots for sale", () => {
+  it("applies", () => {
+    expect(N.nocApplies("plot", "sale")).toBe(true);
+    expect(N.nocApplies("plot", "rent")).toBe(false);
+    expect(N.nocApplies("flat", "sale")).toBe(false);
+  });
+  it("ignored for a flat row", () => {
+    const r = validateRow({ ...emptyRow(), property_type: "flat", sector: "21", size_sqyd: "1200", price: "90 L",
+      owner_phone: "9811012345", noc: "yes" }, SECTORS);
+    expect(r.clean?.noc).toBeNull();
+  });
+  it("kept for a plot row", () => {
+    const r = validateRow({ ...emptyRow(), property_type: "plot", sector: "21", size_sqyd: "200", price: "1.1 cr",
+      owner_phone: "9811012345", noc: "applied" }, SECTORS);
+    expect(r.clean?.noc).toBe("applied");
+  });
+});

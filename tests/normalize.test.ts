@@ -96,6 +96,9 @@ describe("noc only for plots for sale", () => {
     expect(N.nocApplies("plot", "sale")).toBe(true);
     expect(N.nocApplies("plot", "rent")).toBe(false);
     expect(N.nocApplies("flat", "sale")).toBe(false);
+    expect(N.nocApplies("land", "sale")).toBe(true);
+    expect(N.nocApplies("kothi", "sale")).toBe(true);
+    expect(N.nocApplies("kothi", "rent")).toBe(false);
   });
   it("ignored for a flat row", () => {
     const r = validateRow({ ...emptyRow(), property_type: "flat", sector: "21", size_sqyd: "1200", price: "90 L",

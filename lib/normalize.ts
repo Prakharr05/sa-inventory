@@ -124,8 +124,8 @@ export function parseBool(input: unknown): Parsed<boolean> {
   return err(`Use yes/no`);
 }
 
-// NOC applies only to plots for sale. Change here to widen it (single source of truth).
-export const NOC_TYPES = ["plot"];
+// NOC applies only to these types, for sale. Change here to widen it (single source of truth).
+export const NOC_TYPES = ["plot", "land", "kothi"];
 export const nocApplies = (type: string | null | undefined, listing: string | null | undefined) =>
   !!type && NOC_TYPES.includes(type) && listing === "sale";
 

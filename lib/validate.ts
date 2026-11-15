@@ -15,6 +15,7 @@ export const COLUMNS = [
   { key: "owner_phone", label: "Owner phone", required: true, hint: "98xxxxxxxx" },
   { key: "source", label: "Source", hint: "direct / broker" },
   { key: "exclusive", label: "Exclusive", hint: "yes/no" },
+  { key: "noc", label: "NOC", hint: "yes / applied / no" },
   { key: "notes", label: "Notes" },
 ] as const;
 
@@ -27,7 +28,7 @@ export type CleanRow = {
   property_type: string; listing_type: string; sector: string; size_sqyd: number;
   floor: string | null; facing: string | null; park_facing: boolean; price_inr: number;
   status: string; owner_name: string | null; owner_phone: string; source: string;
-  exclusive: boolean; notes: string | null;
+  exclusive: boolean; noc: string | null; notes: string | null;
 };
 
 export type RowResult = {
@@ -56,6 +57,8 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
   const owner_phone = take("owner_phone", N.parsePhone(r.owner_phone));
   const source = take("source", N.parseSource(r.source));
   const exclusive = take("exclusive", N.parseBool(r.exclusive));
+  // NOC only applies to sale listings; ignored for rent.
+  const noc = listing_type === "sale" ? take("noc", N.parseNoc(r.noc)) : null;
 
   const warnings: string[] = [];
   if (price_inr && listing_type === "sale" && price_inr < 5e5) warnings.push("Sale price under ₹5 L — check");
@@ -68,7 +71,7 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
       property_type: property_type!, listing_type: listing_type!, sector: sector!, size_sqyd: size_sqyd!,
       floor: String(r.floor ?? "").trim() || null, facing, park_facing: park_facing!, price_inr: price_inr!,
       status: status!, owner_name: String(r.owner_name ?? "").trim() || null, owner_phone: owner_phone!,
-      source: source!, exclusive: exclusive!, notes: String(r.notes ?? "").trim() || null,
+      source: source!, exclusive: exclusive!, noc, notes: String(r.notes ?? "").trim() || null,
     },
   };
 }

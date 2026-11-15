@@ -13,7 +13,7 @@ export default function PropertyLeads({ id }: { id: string }) {
 
   useEffect(() => {
     supabase.rpc("leads_for_property", { p_property: id }).then(({ data }) => setLeads((data ?? []) as Lead[]));
-    supabase.from("properties").select("property_type,listing_type,sector,size_sqyd,floor,facing,park_facing,price_inr,photos")
+    supabase.from("properties").select("property_type,listing_type,sector,size_sqyd,floor,facing,park_facing,price_inr,photos,noc")
       .eq("id", id).single().then(({ data }) => setProp(data as ShareProperty | null));
   }, [id]);
 

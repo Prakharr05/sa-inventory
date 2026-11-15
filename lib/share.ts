@@ -4,6 +4,7 @@ import { photoUrl } from "./photos";
 export type ShareProperty = {
   property_type: string; listing_type: string; sector: string; size_sqyd: number;
   floor: string | null; facing: string | null; park_facing: boolean; price_inr: number; photos?: string[] | null;
+  noc?: string | null;
 };
 
 const label = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -16,6 +17,7 @@ export function propertyMessage(p: ShareProperty): string {
     p.floor && `Floor: ${p.floor}`,
     (p.facing || p.park_facing) && `Facing: ${[p.facing && label(p.facing), p.park_facing && "Park facing"].filter(Boolean).join(" · ")}`,
     `${p.listing_type === "rent" ? "Rent" : "Price"}: ${formatINR(p.price_inr)}${p.listing_type === "rent" ? "/month" : ""}`,
+    p.listing_type === "sale" && p.noc === "yes" ? "NOC: Available" : null,
     p.photos?.length ? `Photos: ${photoUrl(p.photos[0])}` : null,
     "",
     "— Sharma Associates",

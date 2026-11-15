@@ -124,6 +124,16 @@ export function parseBool(input: unknown): Parsed<boolean> {
   return err(`Use yes/no`);
 }
 
+// NOC: yes / applied / no; blank = not sure
+export function parseNoc(input: unknown): Parsed<string> {
+  const s = clean(input).toLowerCase();
+  if (!s || ["?", "na", "n/a", "unknown", "not sure"].includes(s)) return ok<string>(null);
+  if (["y", "yes", "haan", "available", "ok", "clear"].includes(s)) return ok("yes");
+  if (["applied", "pending", "in process", "process"].includes(s)) return ok("applied");
+  if (["n", "no", "nahi"].includes(s)) return ok("no");
+  return err(`Use yes / applied / no`);
+}
+
 export function parseStatus(input: unknown): Parsed<string> {
   const s = clean(input).toLowerCase();
   if (!s) return ok("available");

@@ -13,16 +13,16 @@ const PAGE = 200;
 type Row = {
   id: string; property_type: string; listing_type: string; sector: string; size_sqyd: number;
   floor: string | null; facing: string | null; park_facing: boolean; price_inr: number;
-  status: string; source: string; exclusive: boolean; notes: string | null; is_public: boolean; entry_method: string;
+  status: string; source: string; exclusive: boolean; notes: string | null; is_public: boolean; entry_method: string; noc: string | null;
   last_verified_at: string; owner: { name: string | null; phone: string | null } | null;
 };
 
 type Filters = {
   q: string; sector: string; type: string; listing: string; status: string;
-  minPrice: string; maxPrice: string; minSize: string; maxSize: string; staleOnly: boolean; entry: string;
+  minPrice: string; maxPrice: string; minSize: string; maxSize: string; staleOnly: boolean; entry: string; noc: string;
 };
 const EMPTY: Filters = { q: "", sector: "", type: "", listing: "", status: "available",
-  minPrice: "", maxPrice: "", minSize: "", maxSize: "", staleOnly: false, entry: "" };
+  minPrice: "", maxPrice: "", minSize: "", maxSize: "", staleOnly: false, entry: "", noc: "" };
 
 const label = (s: string) => s.replace(/_/g, " ");
 const daysAgo = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
@@ -69,6 +69,10 @@ function Inventory() {
     if (minS) q = q.gte("size_sqyd", minS);
     if (maxS) q = q.lte("size_sqyd", maxS);
     if (filters.entry) q = q.eq("entry_method", filters.entry);
+    // NOC is sale-only, so a NOC filter limits results to sale listings.
+    if (filters.noc) q = q.eq("listing_type", "sale");
+    if (filters.noc === "unknown") q = q.is("noc", null);
+    else if (filters.noc) q = q.eq("noc", filters.noc);
     if (filters.staleOnly) q = q.lt("last_verified_at", new Date(Date.now() - STALE_DAYS * 864e5).toISOString());
     if (filters.q.trim()) q = q.ilike("notes", `%${filters.q.trim()}%`);
     const { data, count, error } = await q;
@@ -120,6 +124,13 @@ function Inventory() {
         <input placeholder="Max price (1.5 cr)" value={f.maxPrice} onChange={(e) => set("maxPrice", e.target.value)} />
         <input placeholder={`Min ${unitLabel(sizeUnit(f.type))}`} inputMode="numeric" value={f.minSize} onChange={(e) => set("minSize", e.target.value)} />
         <input placeholder={`Max ${unitLabel(sizeUnit(f.type))}`} inputMode="numeric" value={f.maxSize} onChange={(e) => set("maxSize", e.target.value)} />
+        <select value={f.noc} onChange={(e) => set("noc", e.target.value)}>
+          <option value="">NOC: any</option>
+          <option value="yes">NOC: yes</option>
+          <option value="applied">NOC: applied</option>
+          <option value="no">NOC: no</option>
+          <option value="unknown">NOC: not sure</option>
+        </select>
         <select value={f.entry} onChange={(e) => set("entry", e.target.value)}>
           <option value="">Manual + bulk</option>
           <option value="manual">Manual only</option>
@@ -149,6 +160,9 @@ function Inventory() {
                   <td className="c">
                     {label(r.property_type)}{r.listing_type === "rent" && <span className="pill"> rent</span>}
                     {r.exclusive && <span className="pill"> excl.</span>}
+                    {r.listing_type === "sale" && r.noc === "yes" && <span className="pill ok-pill"> NOC</span>}
+                    {r.listing_type === "sale" && r.noc === "applied" && <span className="pill warn"> NOC applied</span>}
+                    {r.listing_type === "sale" && r.noc === "no" && <span className="pill"> no NOC</span>}
                     {r.entry_method === "bulk" && <span className="pill" title="Added via bulk import"> bulk</span>}
                   </td>
                   <td className="c">{formatSize(r.size_sqyd, r.property_type)}</td>

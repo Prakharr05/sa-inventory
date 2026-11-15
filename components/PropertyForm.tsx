@@ -17,12 +17,12 @@ const STATUSES = ["available", "token", "sold", "withdrawn"];
 type Form = {
   property_type: string; listing_type: string; sector: string; size: string; floor: string;
   facing: string; park_facing: boolean; price: string; status: string; owner_name: string;
-  owner_phone: string; source: string; exclusive: boolean; notes: string; is_public: boolean;
+  owner_phone: string; source: string; exclusive: boolean; notes: string; is_public: boolean; noc: string;
 };
 const BLANK: Form = {
   property_type: "", listing_type: "sale", sector: "", size: "", floor: "", facing: "",
   park_facing: false, price: "", status: "available", owner_name: "", owner_phone: "",
-  source: "direct_owner", exclusive: false, notes: "", is_public: false,
+  source: "direct_owner", exclusive: false, notes: "", is_public: false, noc: "",
 };
 
 export default function PropertyForm({ id }: { id: string | null }) {
@@ -53,7 +53,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
           size: String(N.fromSqyd(data.size_sqyd, N.sizeUnit(data.property_type))), floor: data.floor ?? "", facing: data.facing ?? "",
           park_facing: data.park_facing, price: N.formatINR(data.price_inr).replace("₹", ""),
           status: data.status, owner_name: data.owner?.name ?? "", owner_phone: data.owner?.phone ?? "",
-          source: data.source ?? "direct_owner", exclusive: data.exclusive, notes: data.notes ?? "",
+          source: data.source ?? "direct_owner", exclusive: data.exclusive, notes: data.notes ?? "", noc: data.noc ?? "",
           is_public: data.is_public,
         });
         setPhotos(data.photos ?? []);
@@ -99,7 +99,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
       const { error } = await supabase.rpc("save_property_guarded", { p: {
         id: pid, property_type: type.value, listing_type: f.listing_type, sector: sector.value,
         size_sqyd: size.value, floor: f.floor, facing: f.facing, park_facing: f.park_facing,
-        price_inr: price.value, status: f.status, source: f.source, exclusive: f.exclusive,
+        price_inr: price.value, status: f.status, source: f.source, exclusive: f.exclusive, noc: f.listing_type === "sale" ? f.noc : "",
         owner_name: f.owner_name.trim(), owner_phone: phone.value ?? "", notes: f.notes.trim(),
         photos: [...keep, ...uploaded], is_public: f.is_public,
       } });
@@ -217,6 +217,15 @@ export default function PropertyForm({ id }: { id: string | null }) {
             onChange={(e) => { setNewFiles((fs) => [...fs, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
         </label>
       </div>
+
+      {f.listing_type === "sale" && <>
+      <label className="pf-label">NOC</label>
+      <div className="chips">
+        {([["yes", "Yes"], ["applied", "Applied"], ["no", "No"], ["", "Not sure"]] as const).map(([v, l]) => (
+          <button type="button" key={l} className={f.noc === v ? "chip on" : "chip"} onClick={() => set("noc", v)}>{l}</button>
+        ))}
+      </div>
+      </>}
 
       <label className="pf-label">Owner</label>
       <input placeholder="Name" value={f.owner_name} onChange={(e) => set("owner_name", e.target.value)} />

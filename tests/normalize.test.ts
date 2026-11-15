@@ -73,3 +73,20 @@ describe("units", () => {
     expect(N.leadSizeUnit([])).toBe("sqyd");
   });
 });
+
+describe("noc", () => {
+  it.each([["yes", "yes"], ["Y", "yes"], ["applied", "applied"], ["pending", "applied"], ["no", "no"]])("%s", (i, o) =>
+    expect(N.parseNoc(i).value).toBe(o));
+  it("blank = not sure", () => expect(N.parseNoc("").value).toBeNull());
+  it("bad value", () => expect(N.parseNoc("maybe").error).toBeTruthy());
+  it("header maps", () => expect(mapHeader("NOC")).toBe("noc"));
+});
+
+describe("noc on rent", () => {
+  it("ignored for rent rows", () => {
+    const r = validateRow({ ...emptyRow(), property_type: "kothi", listing_type: "rent", sector: "9", size_sqyd: "300",
+      price: "85000", owner_phone: "9811012345", noc: "maybe" }, SECTORS);
+    expect(r.errors.noc).toBeUndefined();
+    expect(r.clean?.noc).toBeNull();
+  });
+});

@@ -9,7 +9,7 @@ export const COLUMNS = [
   { key: "floor", label: "Floor", hint: "GF / FF / Full" },
   { key: "facing", label: "Facing", hint: "E / NE" },
   { key: "park_facing", label: "Park", hint: "yes/no" },
-  { key: "price", label: "Price", required: true, hint: "1.10 cr / 90 L / @110" },
+  { key: "price", label: "Price", hint: "1.10 cr / 90 L / @110 (optional)" },
   { key: "status", label: "Status", hint: "available" },
   { key: "owner_name", label: "Owner name" },
   { key: "owner_phone", label: "Owner phone", required: true, hint: "98xxxxxxxx" },
@@ -26,7 +26,7 @@ export const emptyRow = (): RawRow =>
 
 export type CleanRow = {
   property_type: string; listing_type: string; sector: string; size_sqyd: number;
-  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number;
+  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number | null;
   status: string; owner_name: string | null; owner_phone: string; source: string;
   exclusive: boolean; noc: string | null; notes: string | null;
 };
@@ -52,7 +52,8 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
   const size_sqyd = take("size_sqyd", N.parseSize(r.size_sqyd, N.sizeUnit(property_type)));
   const facing = take("facing", N.parseFacing(r.facing));
   const park_facing = take("park_facing", N.parseBool(r.park_facing));
-  const price_inr = take("price", N.parsePrice(r.price, size_sqyd, listing_type));
+  // Price is optional: blank → null (many broker posts have none).
+  const price_inr = String(r.price ?? "").trim() ? take("price", N.parsePrice(r.price, size_sqyd, listing_type)) : null;
   const status = take("status", N.parseStatus(r.status));
   const owner_phone = take("owner_phone", N.parsePhone(r.owner_phone));
   const source = take("source", N.parseSource(r.source));
@@ -69,19 +70,20 @@ export function validateRow(r: RawRow, sectors: string[]): RowResult {
     errors, warnings,
     clean: {
       property_type: property_type!, listing_type: listing_type!, sector: sector!, size_sqyd: size_sqyd!,
-      floor: String(r.floor ?? "").trim() || null, facing, park_facing: park_facing!, price_inr: price_inr!,
+      floor: String(r.floor ?? "").trim() || null, facing, park_facing: park_facing!, price_inr,
       status: status!, owner_name: String(r.owner_name ?? "").trim() || null, owner_phone: owner_phone!,
       source: source!, exclusive: exclusive!, noc, notes: String(r.notes ?? "").trim() || null,
     },
   };
 }
 
-// Same sector + type + listing + size, price within 5% → likely the same property.
+// Same sector + type + listing + size, price within 5% (or missing on either side) → likely the same property.
 export type DupKey = Pick<CleanRow, "sector" | "property_type" | "listing_type" | "size_sqyd" | "price_inr">;
 export function isLikelyDup(a: DupKey, b: DupKey): boolean {
   return a.sector === b.sector && a.property_type === b.property_type && a.listing_type === b.listing_type &&
     Number(a.size_sqyd) === Number(b.size_sqyd) &&
-    Math.abs(a.price_inr - b.price_inr) <= 0.05 * Math.max(a.price_inr, b.price_inr);
+    (a.price_inr == null || b.price_inr == null ||
+      Math.abs(a.price_inr - b.price_inr) <= 0.05 * Math.max(a.price_inr, b.price_inr));
 }
 
 // Map arbitrary file headers ("Owner Phone", "size", "Price (Rs)") to our keys.

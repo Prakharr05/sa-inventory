@@ -31,11 +31,29 @@ export function parseListing(input: unknown): Parsed<string> {
 }
 
 // ---------- Sector ----------
+// Named areas (not numbered sectors): spelling variants → the canonical name in the sectors table.
+// Keep in sync with the WhatsApp processor's sector_aliases.csv.
+export const AREA_ALIASES: Record<string, string> = {
+  "nit": "NIT", "n.i.t": "NIT", "n.i.t.": "NIT", "nit faridabad": "NIT",
+  "neharpar": "Neharpar", "nehar par": "Neharpar", "neharpaar": "Neharpar", "nehar paar": "Neharpar",
+  "neharpar faridabad": "Neharpar",
+  "greater faridabad": "Greater Faridabad", "gr faridabad": "Greater Faridabad", "gr. faridabad": "Greater Faridabad",
+  "greater fbd": "Greater Faridabad", "gr. fbd": "Greater Faridabad",
+  "old faridabad": "Old Faridabad", "old fbd": "Old Faridabad",
+  "ballabgarh": "Ballabgarh", "ballabhgarh": "Ballabgarh", "ballabgadh": "Ballabgarh", "ballabhgadh": "Ballabgarh",
+  "greenfield": "Greenfield Colony", "greenfield colony": "Greenfield Colony", "green field colony": "Greenfield Colony",
+  "green field": "Greenfield Colony",
+  "surajkund": "Surajkund", "suraj kund": "Surajkund",
+  "other": "Other",
+};
+
 export function parseSector(input: unknown, known: string[]): Parsed<string> {
   const s = clean(input);
   if (!s) return err("Required");
   const m = s.match(/^(?:sector|sec|s)?[\s\-.]*(\d{1,3})$/i);
-  const candidate = m ? `Sector ${parseInt(m[1], 10)}` : s;
+  // "NIT 1", "NIT-5" → NIT (zone number belongs in notes)
+  const key = s.toLowerCase().replace(/\s+/g, " ").replace(/^(n\.?i\.?t\.?)[\s\-]*\d+$/, "nit");
+  const candidate = m ? `Sector ${parseInt(m[1], 10)}` : AREA_ALIASES[key] ?? s;
   const hit = known.find((k) => k.toLowerCase() === candidate.toLowerCase());
   return hit ? ok(hit) : err(`Unknown sector "${s}"`);
 }
@@ -155,7 +173,8 @@ export function parseSource(input: unknown): Parsed<string> {
 }
 
 // ---------- Display helper ----------
-export function formatINR(n: number): string {
+export function formatINR(n: number | null | undefined): string {
+  if (n == null) return "—";
   if (n >= 1e7) return `₹${(n / 1e7).toFixed(2).replace(/\.?0+$/, "")} Cr`;
   if (n >= 1e5) return `₹${(n / 1e5).toFixed(2).replace(/\.?0+$/, "")} L`;
   return `₹${n.toLocaleString("en-IN")}`;

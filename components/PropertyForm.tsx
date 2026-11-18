@@ -51,7 +51,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
         setF({
           property_type: data.property_type, listing_type: data.listing_type, sector: data.sector,
           size: String(N.fromSqyd(data.size_sqyd, N.sizeUnit(data.property_type))), floor: data.floor ?? "", facing: data.facing ?? "",
-          park_facing: data.park_facing, price: N.formatINR(data.price_inr).replace("₹", ""),
+          park_facing: data.park_facing, price: data.price_inr == null ? "" : N.formatINR(data.price_inr).replace("₹", ""),
           status: data.status, owner_name: data.owner?.name ?? "", owner_phone: data.owner?.phone ?? "",
           source: data.source ?? "direct_owner", exclusive: data.exclusive, notes: data.notes ?? "", noc: data.noc ?? "",
           is_public: data.is_public,
@@ -65,7 +65,8 @@ export default function PropertyForm({ id }: { id: string | null }) {
   const sector = N.parseSector(f.sector, sectors);
   const unit = N.sizeUnit(type.value);
   const size = N.parseSize(f.size, unit);
-  const price = N.parsePrice(f.price.replace(/\bCr\b/, "cr"), size.value, f.listing_type);
+  // Price optional: blank → null.
+  const price: N.Parsed<number> = f.price.trim() ? N.parsePrice(f.price, size.value, f.listing_type) : { value: null };
   const phone = f.owner_phone.trim() ? N.parsePhone(f.owner_phone) : { value: null };
   const errors = [
     type.error && "Pick a type", sector.error && `Sector: ${sector.error}`, size.error && `Size: ${size.error}`,
@@ -128,7 +129,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
     return (
       <main className="pf">
         <h1>Saved ✓</h1>
-        <p>{TYPES.find((t) => t[0] === type.value)?.[1]} · {sector.value} · {N.formatSize(size.value!, type.value!)} · {N.formatINR(price.value!)}</p>
+        <p>{TYPES.find((t) => t[0] === type.value)?.[1]} · {sector.value} · {N.formatSize(size.value!, type.value!)} · {N.formatINR(price.value)}</p>
         <div className="pf-actions">
           <button className="primary" onClick={addAnother}>Add another</button>
           <a className="btn" href={`/inventory/property?id=${savedId}`}>Edit this one</a>
@@ -169,7 +170,7 @@ export default function PropertyForm({ id }: { id: string | null }) {
           <input inputMode="decimal" placeholder={unit === "sqft" ? "1200" : "200"} value={f.size} onChange={(e) => set("size", e.target.value)} />
         </div>
         <div>
-          <label className="pf-label">{f.listing_type === "rent" ? "Rent / month *" : "Price *"}</label>
+          <label className="pf-label">{f.listing_type === "rent" ? "Rent / month" : "Price"} <span className="muted">(optional)</span></label>
           <input placeholder={f.listing_type === "rent" ? "45k / 45000" : "1.10 cr / 90 L / @110"} value={f.price}
             onChange={(e) => set("price", e.target.value)} />
           <Hint p={f.price ? price : null} show={(v) => N.formatINR(v)} />

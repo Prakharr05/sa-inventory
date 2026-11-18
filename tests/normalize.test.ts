@@ -37,7 +37,7 @@ describe("row + dup + headers", () => {
     expect(r.clean?.listing_type).toBe("sale");
   });
   it("errors collected per field", () => {
-    const r = validateRow({ ...base, sector: "xyz", price: "" }, SECTORS);
+    const r = validateRow({ ...base, sector: "xyz", price: "abc" }, SECTORS);
     expect(Object.keys(r.errors).sort()).toEqual(["price", "sector"]);
   });
   it("dup within 5%", () => {
@@ -110,4 +110,25 @@ describe("noc only for plots for sale", () => {
       owner_phone: "9811012345", noc: "applied" }, SECTORS);
     expect(r.clean?.noc).toBe("applied");
   });
+});
+
+describe("optional price", () => {
+  const row = { ...emptyRow(), property_type: "plot", sector: "21", size_sqyd: "200", owner_phone: "9811012345" };
+  it("blank price is valid", () => {
+    const r = validateRow(row, SECTORS);
+    expect(r.clean?.price_inr).toBeNull();
+  });
+  it("dup when price missing on one side", () => {
+    const a = validateRow(row, SECTORS).clean!;
+    const b = validateRow({ ...row, price: "1.1 cr" }, SECTORS).clean!;
+    expect(isLikelyDup(a, b)).toBe(true);
+  });
+  it("formatINR(null)", () => expect(N.formatINR(null)).toBe("—"));
+});
+
+describe("named areas", () => {
+  const S = [...SECTORS, "Neharpar", "Greater Faridabad", "Ballabgarh", "Sector 97", "Sector 123"];
+  it.each([["Nehar Paar", "Neharpar"], ["neharpaar", "Neharpar"], ["Gr. Faridabad", "Greater Faridabad"],
+    ["NIT 5", "NIT"], ["N.I.T", "NIT"], ["Ballabhgarh", "Ballabgarh"], ["Sec 97", "Sector 97"], ["123", "Sector 123"]])(
+    "%s → %s", (i, o) => expect(N.parseSector(i, S).value).toBe(o));
 });

@@ -3,7 +3,7 @@ import { photoUrl } from "./photos";
 
 export type ShareProperty = {
   property_type: string; listing_type: string; sector: string; size_sqyd: number;
-  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number; photos?: string[] | null;
+  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number | null; photos?: string[] | null;
   noc?: string | null;
 };
 
@@ -16,7 +16,9 @@ export function propertyMessage(p: ShareProperty): string {
     `Size: ${formatSize(p.size_sqyd, p.property_type)}`,
     p.floor && `Floor: ${p.floor}`,
     (p.facing || p.park_facing) && `Facing: ${[p.facing && label(p.facing), p.park_facing && "Park facing"].filter(Boolean).join(" · ")}`,
-    `${p.listing_type === "rent" ? "Rent" : "Price"}: ${formatINR(p.price_inr)}${p.listing_type === "rent" ? "/month" : ""}`,
+    p.price_inr == null
+      ? `${p.listing_type === "rent" ? "Rent" : "Price"}: On request`
+      : `${p.listing_type === "rent" ? "Rent" : "Price"}: ${formatINR(p.price_inr)}${p.listing_type === "rent" ? "/month" : ""}`,
     nocApplies(p.property_type, p.listing_type) && p.noc === "yes" ? "NOC: Available" : null,
     p.photos?.length ? `Photos: ${photoUrl(p.photos[0])}` : null,
     "",

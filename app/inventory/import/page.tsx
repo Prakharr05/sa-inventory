@@ -219,7 +219,7 @@ function Importer() {
                       ? <span className="bad">✕ {Object.keys(res.errors).length} error(s)</span>
                       : dupNotes[ri] || res.warnings.length
                         ? <span className="warn">⚠ {[dupNotes[ri], ...res.warnings].filter(Boolean).join("; ")}</span>
-                        : <span className="ok">✓ {formatINR(res.clean.price_inr)}</span>}
+                        : <span className="ok">✓ {res.clean.price_inr == null ? "no price" : formatINR(res.clean.price_inr)}</span>}
                   </td>
                 </tr>
               );

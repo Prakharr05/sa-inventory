@@ -12,7 +12,7 @@ const PAGE = 200;
 
 type Row = {
   id: string; property_type: string; listing_type: string; sector: string; size_sqyd: number;
-  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number;
+  floor: string | null; facing: string | null; park_facing: boolean; price_inr: number | null;
   status: string; source: string; exclusive: boolean; notes: string | null; is_public: boolean; entry_method: string; noc: string | null;
   last_verified_at: string; owner: { name: string | null; phone: string | null } | null;
 };
@@ -170,10 +170,11 @@ function Inventory() {
                     {[r.floor, r.facing && label(r.facing), r.park_facing && "park"].filter(Boolean).join(" · ") || "—"}
                   </td>
                   <td className="c">
-                    <input className="cell-input" defaultValue={formatINR(r.price_inr)} key={r.price_inr}
+                    <input className="cell-input" defaultValue={r.price_inr == null ? "" : formatINR(r.price_inr)} key={r.price_inr ?? "none"}
+                      placeholder="add price"
                       title="Edit: 1.2 cr / 95 L / @120"
                       onFocus={(e) => e.target.select()}
-                      onBlur={(e) => e.target.value !== formatINR(r.price_inr) && savePrice(r, e.target.value)}
+                      onBlur={(e) => e.target.value !== (r.price_inr == null ? "" : formatINR(r.price_inr)) && savePrice(r, e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
                   </td>
                   <td className="c">

@@ -32,7 +32,8 @@ function Importer() {
 
   const loadBatches = async () => {
     const { data } = await supabase.from("import_batches")
-      .select("id,file_name,row_count,created_at").order("created_at", { ascending: false }).limit(10);
+      .select("id,file_name,row_count,created_at").eq("kind", "properties")
+      .order("created_at", { ascending: false }).limit(10);
     setBatches(data ?? []);
   };
 

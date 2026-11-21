@@ -1,0 +1,3 @@
+name,phone,wants,property_types,sectors,size_min,size_max,size_unit,budget_min,budget_max,status,follow_up_on,source,referred_by,notes
+Mr. Gupta,9811012345,buy,plot;bf,21;Sector 15,200,300,sqyd,1 cr,1.5 cr,new,2026-12-01,referral,Sharma ji,corner preferred
+Neha,9876543210,rent,flat,86,1200,,sqft,,40k,active,,website,,ready to move

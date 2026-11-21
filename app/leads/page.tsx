@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import AuthGate from "@/components/AuthGate";
+import AuthGate, { useIsAdmin } from "@/components/AuthGate";
 import { formatINR, fromSqyd, leadSizeUnit, unitLabel } from "@/lib/normalize";
 import { isoDate } from "@/components/LeadForm";
 
@@ -25,6 +25,7 @@ function Leads() {
   const [rows, setRows] = useState<Lead[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [msg, setMsg] = useState("");
+  const isAdmin = useIsAdmin();
 
   const load = useCallback(async () => {
     const today = isoDate(new Date());
@@ -64,6 +65,7 @@ function Leads() {
       <div className="bar">
         <h1 style={{ margin: 0 }}>Leads</h1>
         <a className="btn" href="/leads/lead">+ New lead</a>
+        {isAdmin && <a className="btn" href="/leads/import">Bulk add</a>}
       </div>
 
       <div className="bar">
